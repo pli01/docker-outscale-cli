@@ -1,0 +1,4 @@
+.env
+**.env
+osc/config.json
+tmp
