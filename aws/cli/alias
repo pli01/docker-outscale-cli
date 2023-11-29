@@ -9,6 +9,11 @@ ls-vm=ec2 describe-instances \
 # vm console
 vm-console = !f() { aws ec2 get-console-output --instance-id "$1" --output text; }; f
 
+# List all images
+ls-images=ec2 describe-images \
+     --query 'Images[].{ImageId: ImageId,Name: Name, Public: Public, Description: Description, Architecture: Architecture}' \
+     --output table
+
 # List all your volumes
 ls-volumes=ec2 describe-volumes \
      --query 'Volumes[].{VolumeId: VolumeId,State: State,Size: Size,Name: Tags[0].Value,AZ: AvailabilityZone}' \
