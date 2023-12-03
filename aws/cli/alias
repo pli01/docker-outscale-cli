@@ -9,6 +9,11 @@ ls-vm=ec2 describe-instances \
 # vm console
 vm-console = !f() { aws ec2 get-console-output --instance-id "$1" --output text; }; f
 
+# public ip
+ls-eip = ec2 describe-addresses --output table
+
+ls-keypair = ec2 describe-key-pairs --output table
+
 # List all images
 ls-images=ec2 describe-images \
      --query 'Images[].{ImageId: ImageId,Name: Name, Public: Public, Description: Description, Architecture: Architecture}' \

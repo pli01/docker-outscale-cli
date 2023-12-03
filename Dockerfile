@@ -39,6 +39,8 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
     && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin/ \
+    && mv /usr/local/bin/terraform /usr/local/bin/terraform-${TERRAFORM_VERSION} \
+    && ln -sf /usr/local/bin/terraform-${TERRAFORM_VERSION} /usr/local/bin/terraform \
     && rm -rf terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     terraform --version
 
