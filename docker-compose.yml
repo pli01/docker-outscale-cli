@@ -15,7 +15,7 @@ services:
         AWS_CLI_VERSION: ${AWS_CLI_VERSION:-}
         S3CMD_VERSION: ${S3CMD_VERSION:-}
         OSC_CLI_VERSION: ${OSC_CLI_VERSION:-}
-        TERRAFORM_VERSION: "${TERRAFORM_VERSION:-1.1.0}"
+        TERRAFORM_VERSION: "${TERRAFORM_VERSION:-1.5.7}"
     environment:
       http_proxy: ${http_proxy}
       https_proxy: ${http_proxy}

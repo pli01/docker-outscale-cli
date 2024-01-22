@@ -1,6 +1,7 @@
 #
 # Base image
 #
+#FROM --platform=linux/amd64 debian:bullseye
 FROM --platform=linux/amd64 debian:buster
 
 ARG http_proxy=${http_proxy:-}
@@ -14,7 +15,8 @@ ARG AWS_CLI_VERSION
 ARG OSC_CLI_VERSION
 ARG S3CMD_VERSION
 
-ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.1.0}
+ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.5.7}
+#ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.1.0}
 #ARG TERRAFORM_VERSION="0.15.3"
 
 # define packages
@@ -22,12 +24,13 @@ ARG DEBIAN_PACKAGES="tzdata keyboard-configuration \
       curl unzip groff less wget vim jq \
       git python3 python-dnspython python3-dnspython python-redis python3-netaddr python3-jmespath \
       python-jmespath python3-cryptography \
-      python-pip python3-pip python-setuptools python3-setuptools python3-urllib3 \
+      python-pip python3-pip python-setuptools python3-setuptools python3-urllib3 lsb-release \
       ruby"
 
 # Installing prerequisite packages and ansible
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sources.list.d/buster-backports.list \
+RUN . /etc/os-release \
+   ; echo "deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main" > /etc/apt/sources.list.d/${VERSION_CODENAME}-backports.list \
    ; export DEBIAN_FRONTEND="noninteractive" \
    ; apt-get -qqy update \
    && apt-get install -qqy ${DEBIAN_PACKAGES} "ansible${ANSIBLE_VERSION:+=$ANSIBLE_VERSION}" \
