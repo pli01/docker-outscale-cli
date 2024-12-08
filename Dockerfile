@@ -1,8 +1,7 @@
 #
 # Base image
 #
-#FROM --platform=linux/amd64 debian:bullseye
-FROM --platform=linux/amd64 debian:buster
+FROM --platform=linux/amd64 debian:bullseye
 
 ARG http_proxy=${http_proxy:-}
 ARG https_proxy=${https_proxy:-}
@@ -10,21 +9,23 @@ ARG no_proxy=${no_proxy:-}
 ARG PYPI_URL=${PYPI_URL:-}
 ARG PYPI_HOST=${PYPI_HOST:-}
 
-ARG ANSIBLE_VERSION=${ANSIBLE_VERSION:-2.9.*}
+#ARG ANSIBLE_VERSION=${ANSIBLE_VERSION:-2.9.*}
+ARG ANSIBLE_VERSION=${ANSIBLE_VERSION:-2.10.*}
 ARG AWS_CLI_VERSION
 ARG OSC_CLI_VERSION
 ARG S3CMD_VERSION
 
-ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.5.7}
+ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.5.7*}
 #ARG TERRAFORM_VERSION=${TERRAFORM_VERSION:-1.1.0}
 #ARG TERRAFORM_VERSION="0.15.3"
 
 # define packages
 ARG DEBIAN_PACKAGES="tzdata keyboard-configuration \
-      curl unzip groff less wget vim jq \
-      git python3 python-dnspython python3-dnspython python-redis python3-netaddr python3-jmespath \
-      python-jmespath python3-cryptography \
-      python-pip python3-pip python-setuptools python3-setuptools python3-urllib3 lsb-release \
+      curl unzip groff less wget vim jq sudo \
+      gnupg software-properties-common \
+      git python3 python3-dnspython python3-redis python3-netaddr python3-jmespath \
+      python3-cryptography \
+      python3-pip python3-setuptools python3-setuptools python3-urllib3 lsb-release \
       ruby"
 
 # Installing prerequisite packages and ansible
@@ -33,26 +34,39 @@ RUN . /etc/os-release \
    ; echo "deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main" > /etc/apt/sources.list.d/${VERSION_CODENAME}-backports.list \
    ; export DEBIAN_FRONTEND="noninteractive" \
    ; apt-get -qqy update \
-   && apt-get install -qqy ${DEBIAN_PACKAGES} "ansible${ANSIBLE_VERSION:+=$ANSIBLE_VERSION}" \
-   && ansible --version \
+   && apt-get install -qqy ${DEBIAN_PACKAGES} \
    && apt-get autoremove -y && apt-get autoclean -y \
    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# install ansible version
+# https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html#installing-ansible-on-debian
+#  Debian 12 (Bookworm) -> Ubuntu 22.04 (Jammy) jammy
+#  Debian 11 (Bullseye) -> Ubuntu 20.04 (Focal) focal
+RUN export UBUNTU_CODENAME=focal \
+    ; wget -O- "https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367" \
+    | sudo gpg --dearmour -o /usr/share/keyrings/ansible-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/ansible-archive-keyring.gpg] http://ppa.launchpad.net/ansible/ansible/ubuntu $UBUNTU_CODENAME main" \
+    | tee /etc/apt/sources.list.d/ansible.list \
+    && apt-get -qqy update \
+    && apt-get install -qqy "ansible${ANSIBLE_VERSION:+=$ANSIBLE_VERSION}" \
+    && ansible --version
+
 # install terraform version
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
-    && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin/ \
-    && mv /usr/local/bin/terraform /usr/local/bin/terraform-${TERRAFORM_VERSION} \
-    && ln -sf /usr/local/bin/terraform-${TERRAFORM_VERSION} /usr/local/bin/terraform \
-    && rm -rf terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
-    terraform --version
+RUN wget -O - https://apt.releases.hashicorp.com/gpg \
+    | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+    | sudo tee /etc/apt/sources.list.d/hashicorp.list \
+    ; apt-get -qqy update \
+    && apt-get install -qy terraform=${TERRAFORM_VERSION} \
+    && terraform --version
 
 # install terraform provider
-COPY provider.tf .
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-RUN mkdir -p /usr/local/share/terraform/plugins && \
-      echo 'plugin_cache_dir = "/usr/local/share/terraform/plugins"' > $HOME/.terraformrc && \
-      terraform init -backend=false
+#COPY provider.tf .
+#SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+#RUN mkdir -p /usr/local/share/terraform/plugins && \
+#      echo 'plugin_cache_dir = "/usr/local/share/terraform/plugins"' > $HOME/.terraformrc && \
+#      terraform init -backend=false
 
 # AWS CLI installation commands
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
