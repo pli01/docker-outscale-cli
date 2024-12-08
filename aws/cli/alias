@@ -12,7 +12,7 @@ ls-subnet=ec2 describe-subnets \
 
 
 # vm console
-vm-console = !f() { aws ec2 get-console-output --instance-id "$1" --output text; }; f
+vm-console = !f() { aws ec2 get-console-output --instance-id "$1" --output text --no-cli-pager ; }; f
 
 # public ip
 ls-eip = ec2 describe-addresses --output table

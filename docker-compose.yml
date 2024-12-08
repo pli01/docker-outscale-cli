@@ -2,7 +2,7 @@ version: "3.5"
 services:
   cli:
     platform: linux/amd64
-    image: outscale-cli:${DOCKER_OUTSCALE_CLI_VERSION:-latest}
+    image: ${DOCKER_REGISTRY}outscale-cli:${DOCKER_OUTSCALE_CLI_VERSION:-latest}
     build:
       context: .
       args:
